@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-	<meta charset="utf-8">
-	<style type="text/css">   
-	   html { height: 100% }   
-	   body { height: 100%; margin: 0px; padding: 0px }   
-	   #map { height: 100% } 
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0" />
+	<style type="text/css">
+		html { height: 100% }
+		body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+		#map { height: 100% }
 	</style> 
 	<title>Mapa con Capa poligono</title>
 </head>
 <body>
   	<div id="map"></div>
+	
 	<script type="text/javascript"> 
 	var map;
 
@@ -41,12 +42,168 @@
 		});
 
 		araba.setMap(map);
+		//var geojson = JSON.parse('municipios-gipuzkoa.json');
+		map.data.loadGeoJson('municipios-gipuzkoa.json');
+
+		// Color each letter gray. Change the color when the isColorful property
+		// is set to true.
+		map.data.setStyle(function(feature) {
+			var color = 'gray';
+			if (feature.getProperty('isColorful')) {
+				color = feature.getProperty('color');
+			}
+			return /** @type {google.maps.Data.StyleOptions} */({
+				fillColor: color,
+				strokeColor: color,
+				strokeWeight: 1
+			});
+		});
 
 		alert(araba.strokeColor);
+
+	
 	}
 
+
+
+	/* DOM (drag/drop) functions */
+
+	function initEvents() {
+	  	// set up the drag & drop events
+		var mapContainer = document.getElementById('map');
+		var dropContainer = document.getElementById('drop-container');
+
+		// map-specific events
+		mapContainer.addEventListener('dragenter', showPanel, false);
+
+		// overlay specific events (since it only appears once drag starts)
+		dropContainer.addEventListener('dragover', showPanel, false);
+		dropContainer.addEventListener('drop', handleDrop, false);
+		dropContainer.addEventListener('dragleave', hidePanel, false);
+	}
+
+	function showPanel(e) {
+		  e.stopPropagation();
+		  e.preventDefault();
+		  document.getElementById('drop-container').style.display = 'block';
+		  return false;
+	}
+
+	function hidePanel(e) {
+	  	document.getElementById('drop-container').style.display = 'none';
+	}
+
+	function handleDrop(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		hidePanel(e);
+
+		var files = e.dataTransfer.files;
+		if (files.length) {
+			// process file(s) being dropped
+			// grab the file data from each file
+			for (var i = 0, file; file = files[i]; i++) {
+				var reader = new FileReader();
+				reader.onload = function(e) {
+					console.log(e.target.result);
+					loadGeoJsonString(e.target.result);
+				};
+				reader.onerror = function(e) {
+					console.error('reading failed');
+				};
+				reader.readAsText(file);
+			}
+		} else {
+			// process non-file (e.g. text or html) content being dropped
+			// grab the plain text version of the data
+			var plainText = e.dataTransfer.getData('text/plain');
+			if (plainText) {
+				loadGeoJsonString(plainText);
+			}
+		}
+
+		// prevent drag event from bubbling further
+		return false;
+	}
+
+
+	/*
+	function geojsonParse(geojson) {
+
+		var files = geojson;
+		if (files.length) {
+			for (var i = 0, file; file = files[i]; i++) {
+				var reader = new FileReader();
+				reader.onload = function(e) {
+					console.log('onload');
+					loadGeoJsonString(e.target.result);
+				};
+				reader.onerror = function(e) {
+					console.error('reading failed');
+				};
+				reader.readAsText(file);
+			}
+		} else {
+			var plainText = e.dataTransfer.getData('text/plain');
+			if (plainText) {
+				loadGeoJsonString(plainText);
+			}
+		}
+
+		// prevent drag event from bubbling further
+		return false;
+	}
+	*/
+
+	function loadGeoJsonString(geoString) {
+		var geojson = JSON.parse(geoString);
+		console.log(geojson);
+		map.data.addGeoJson(geojson);
+		zoom(map);
+	}
+
+	/**
+	 * Update a map's viewport to fit each geometry in a dataset
+	 * @param {google.maps.Map} map The map to adjust
+	 */
+	function zoom(map) {
+		var bounds = new google.maps.LatLngBounds();
+		map.data.forEach(function(feature) {
+			processPoints(feature.getGeometry(), bounds.extend, bounds);
+		});
+		map.fitBounds(bounds);
+	}
+
+	/**
+	 * Process each point in a Geometry, regardless of how deep the points may lie.
+	 * @param {google.maps.Data.Geometry} geometry The structure to process
+	 * @param {function(google.maps.LatLng)} callback A function to call on each
+	 *     LatLng point encountered (e.g. Array.push)
+	 * @param {Object} thisArg The value of 'this' as provided to 'callback' (e.g.
+	 *     myArray)
+	 */
+	function processPoints(geometry, callback, thisArg) {
+		if (geometry instanceof google.maps.LatLng) {
+			callback.call(thisArg, geometry);
+		} else if (geometry instanceof google.maps.Data.Point) {
+			callback.call(thisArg, geometry.get());
+		} else {
+			geometry.getArray().forEach(function(g) {
+				processPoints(g, callback, thisArg);
+			});
+		}
+	}
+
+
+	
+	function initialize() {
+	  initMap();
+	  initEvents();
+	}
+
+
 	</script>
-  	<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAP0vUg9urLVmyMV6D0ncbtD38GDl9Qgpc&signed_in=true&callback=initMap"></script>
+  	<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAP0vUg9urLVmyMV6D0ncbtD38GDl9Qgpc&signed_in=true&callback=initialize"></script>
 </body>
 </html>
 
