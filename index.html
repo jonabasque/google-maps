@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+	<meta charset="utf-8">
+	<style type="text/css">   
+	   html { height: 100% }   
+	   body { height: 100%; margin: 0px; padding: 0px }   
+	   #map { height: 100% } 
+	</style> 
+	<title>Mapa con Capa poligono</title>
+</head>
+<body>
+  	<div id="map"></div>
+	<script type="text/javascript"> 
+	var map;
+
+	function initMap() {
+		map = new google.maps.Map(document.getElementById('map'), {
+			zoom: 8,
+			center: {lat: 42.810975, lng: -1.655344},
+			//mapTypeId: google.maps.MapTypeId.TERRAIN
+		});
+
+		// Define the LatLng coordinates for the polygon.
+		var arabaCoords = [
+			{lat: 43.050320, lng: -3.339424},
+			{lat: 42.491841, lng: -2.839546},
+			{lat: 42.564708, lng: -2.380867},
+			{lat: 43.048313, lng: -2.512702}
+		];
+
+		// Construct the polygon.
+		var araba = new google.maps.Polygon({
+			paths: arabaCoords,
+			strokeColor: '#FF0000',
+			strokeOpacity: 0.7,
+			strokeWeight: 2,
+			fillColor: '#FF0000',
+			fillOpacity: 0
+		});
+
+		araba.setMap(map);
+
+		alert(araba.strokeColor);
+	}
+
+	</script>
+  	<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAP0vUg9urLVmyMV6D0ncbtD38GDl9Qgpc&signed_in=true&callback=initMap"></script>
+</body>
+</html>
+
+
+
+
